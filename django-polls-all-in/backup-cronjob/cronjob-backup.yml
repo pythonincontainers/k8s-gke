@@ -1,0 +1,41 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  schedule: "* */2 * * *" # Uses FreeBSD crontab format https://www.freebsd.org/cgi/man.cgi?crontab%285%29
+  jobTemplate:
+    spec: # Job Template Specification
+      template:
+        spec: # Pod Template Specification
+          volumes:
+            - name: postgres-backup # Backup destination Volume
+              persistentVolumeClaim:
+                claimName: postgres-backup # PVC named "postgres_backup" must already exist in the Cluster
+          containers:
+          - name: backup
+            image: postgres:11.4
+            volumeMounts:
+              - name: postgres-backup
+                mountPath: /backup # Mount Backup destination to /backup folder
+            env: # Connection Environment Variables for pg_dump
+              - name: PGHOST
+                value: postgres
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: polls-secret
+                    key: password
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: polls-secret
+                    key: username
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: polls-secret
+                    key: dbname
+            command: ["/bin/bash"]
+            args: ["-c", "pg_dump -v --format=c --file=/backup/`date +%F-%T`"]
+          restartPolicy: Never

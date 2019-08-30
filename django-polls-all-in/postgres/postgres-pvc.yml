@@ -1,0 +1,13 @@
+# Adaptations to make it run on GKE Cluster:
+# - removed "selector" to enable Dynamic Volume provisioning
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pv-claim
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

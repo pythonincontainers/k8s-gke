@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: polls-init
+spec:
+  template:
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: polls-init
+      containers:
+      - name: init
+        image: pythonincontainers/django-polls:http
+        command: ["/bin/bash"]
+        args: ["-c", "cat /etc/config/init-script.py | python manage.py shell"]
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+        env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: polls-secret
+                key: database_url
+      restartPolicy: Never
+  backoffLimit: 10

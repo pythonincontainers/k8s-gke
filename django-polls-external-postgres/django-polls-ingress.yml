@@ -1,0 +1,18 @@
+# Adaptations to make it run on GKE Cluster:
+# - changed "apiVersion" to "extensions/v1beta1"
+# - added Annotation to bind this Object to NGINX Ingress Controller
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: django-polls-ingress
+  annotations:
+    # use the NGINX Ingress Controller
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: django-polls-service
+          servicePort: 8000

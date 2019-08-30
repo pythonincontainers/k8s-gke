@@ -1,0 +1,28 @@
+# Adaptations to make it run on GKE Cluster:
+# - updated number of Replicas
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: django-polls-rs
+spec:
+  replicas: 3 # updated for GKE deployment
+  selector:
+    matchLabels:
+      app: django-polls-app
+  template:
+    metadata:
+      labels:
+        app: django-polls-app
+    spec:
+      containers:
+      - image: pythonincontainers/django-polls:http
+        name: app
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: polls-secret
+              key: database_url
+        ports:
+        - containerPort: 8000
+          name: django

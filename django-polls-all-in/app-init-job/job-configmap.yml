@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polls-init
+data:
+  VAR: value
+  init-script.py: |
+    import socket
+    import time
+    from django.conf import settings
+
+    # Read Database config from project settings.py file, as described at https://docs.djangoproject.com/en/2.1/topics/settings/#using-settings-in-python-code
+
+    db_host = settings.DATABASES['default']['HOST']
+    port_string = settings.DATABASES['default']['PORT']
+    if port_string == '':
+      db_port = 5432
+    else:
+      db_port = int(port_string)
+    # Wait for Database Engine to accept incoming connections
+    print('Attempting to connect to DB Server at '+db_host+':'+str(db_port)+'\n')
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+       try:
+           s.connect((db_host, db_port))
+           s.close()
+           break
+       except socket.error as ex:
+           print('DB Engine not ready')
+           time.sleep(0.1)
+    # Call "python manage.py" Command to run Database Migrations
+    print('Executing python manage.py migrate\n')
+    from django.core.management import call_command
+    call_command('migrate','--fake-initial')
+    # Create Django Super User
+    from django.contrib.auth.models import User
+    if not User.objects.filter(username='admin').exists():
+        print('Creating an Admin User\n')
+        User.objects.create_superuser('admin', 'admin@example.com', 'admin') # (Username, E-mail, Password)
+        # Call "python manage.py" to Load Data from JSON file
+        print('Executing python manage.py loaddata\n')
+        call_command('loaddata','initial_data.json')
+  SECOND_VAR: some string
